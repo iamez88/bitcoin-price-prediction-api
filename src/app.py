@@ -7,6 +7,45 @@ import os
 
 from .model import load_model, train_model, get_latest_prediction
 
+# Configure logging for all modules
+def setup_logging():
+    # Create logs directory if it doesn't exist
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
+    # Configure root logger
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('logs/api.log'),
+            logging.StreamHandler()  # Also log to console
+        ]
+    )
+
+    # Get the root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    # Prevent duplicate logging
+    root_logger.handlers = []
+    
+    # Add handlers to root logger
+    file_handler = logging.FileHandler('logs/api.log')
+    console_handler = logging.StreamHandler()
+    
+    # Set format for both handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
+
+# Set up logging at module level
+setup_logging()
+logger = logging.getLogger(__name__)
+
 # Rate limiting
 rate_limits = {}
 RATE_LIMIT = 10  # requests per minute
@@ -44,26 +83,13 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     
-    # Simple logging setup
-    log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    
-    log_file = os.path.join(log_dir, 'api.log')
-    logging.basicConfig(
-        level=logging.INFO,
-        filename=log_file,
-        filemode='a'
-    )
-    
-    logger = app.logger
     logger.info('Application starting up')
     
     @app.route('/')
     @rate_limit
     def hello():
         """Main endpoint with API information"""
-        logger.info('Main endpoint processing HTTP request')
+        logger.info('Main endpoint accessed')
         return jsonify({
             "success": True, 
             "message": "Bitcoin Price Direction Prediction API",
@@ -78,7 +104,7 @@ def create_app():
     @app.route('/api/health')
     def health_check():
         """Health check endpoint"""
-        logger.info('Health check endpoint called')
+        logger.info('Health check endpoint accessed')
         return jsonify({
             "success": True, 
             "status": "healthy",
@@ -89,20 +115,20 @@ def create_app():
     @rate_limit
     def predict():
         """Bitcoin price direction prediction endpoint"""
-        logger.info('Prediction endpoint called')
+        logger.info('Prediction endpoint accessed')
         
         try:
             # Get prediction
             result = get_latest_prediction()
             
             if result is None:
-                logger.error("Prediction failed")
+                logger.error("Prediction failed - no result returned")
                 return jsonify({
                     "success": False,
                     "error": "Failed to make prediction"
                 }), 500
             
-            logger.info(f"Prediction: {result['prediction']} with confidence {result['confidence']:.4f}")
+            logger.info(f"Prediction successful: {result['prediction']} with confidence {result['confidence']:.4f}")
             
             return jsonify({
                 "success": True,
@@ -110,7 +136,7 @@ def create_app():
             })
             
         except Exception as e:
-            logger.error(f"Error during prediction: {str(e)}")
+            logger.error(f"Prediction error: {str(e)}")
             return jsonify({
                 "success": False,
                 "error": "An error occurred during prediction"
@@ -120,19 +146,20 @@ def create_app():
     @rate_limit
     def model_info():
         """Model information endpoint"""
-        logger.info('Model info endpoint called')
+        logger.info('Model info endpoint accessed')
         
         try:
             # Load model
             model_info = load_model()
             
             if model_info is None:
+                logger.warning("No model information available")
                 return jsonify({
                     "success": False,
                     "error": "No model information available"
                 }), 404
             
-            # Return model info
+            logger.info(f"Model info retrieved successfully")
             return jsonify({
                 "success": True,
                 "model_info": {
@@ -143,7 +170,7 @@ def create_app():
             })
             
         except Exception as e:
-            logger.error(f"Error getting model info: {str(e)}")
+            logger.error(f"Model info error: {str(e)}")
             return jsonify({
                 "success": False,
                 "error": "An error occurred while retrieving model information"
