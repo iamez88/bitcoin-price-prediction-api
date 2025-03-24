@@ -15,9 +15,9 @@ A RESTful API for predicting Bitcoin price movement built with Flask and contain
 ## Features
 
 - Bitcoin price direction prediction (UP/DOWN)
+- Data validation & sanitation
 - Comprehensive logging
 - Rate limiting (10 requests per minute)
-- OpenAPI documentation
 - Containerized deployment
 
 ## API Endpoints
