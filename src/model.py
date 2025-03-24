@@ -70,6 +70,7 @@ def train_model():
         model_info = {
             'model': model,
             'feature_cols': feature_cols,
+            'scaler': scaler,  # Save the scaler
             'accuracy': accuracy,
             'trained_at': datetime.now().isoformat()
         }
@@ -136,9 +137,18 @@ def get_latest_prediction():
         # Get the most recent feature values
         latest_features = data.iloc[-1][model_info['feature_cols']]
         
+        # Apply the same scaling as during training
+        if 'scaler' in model_info:
+            # Reshape to 2D array for scaler (scaler expects 2D input)
+            features_scaled = model_info['scaler'].transform([latest_features])
+        else:
+            # Fallback if using an old model without scaler
+            logger.warning("Using unscaled features - model doesn't have a scaler")
+            features_scaled = [latest_features]
+        
         # Make prediction
         model = model_info['model']
-        probabilities = model.predict_proba([latest_features])[0]
+        probabilities = model.predict_proba(features_scaled)[0]
         prediction = int(probabilities[1] > 0.5)  # 1 if up, 0 if down
         
         # Get current price
@@ -147,8 +157,6 @@ def get_latest_prediction():
         return {
             'prediction': 'up' if prediction == 1 else 'down',
             'confidence': float(probabilities[1] if prediction == 1 else probabilities[0]),
-            'probability_up': float(probabilities[1]),
-            'probability_down': float(probabilities[0]),
             'current_price': float(current_price),
             'timestamp': datetime.now().isoformat()
         }

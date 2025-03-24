@@ -7,6 +7,7 @@ test_notebook.ipynb
 instructions.md
 logs/
 .DS_Store
+screenshots/
 
 # Jupyter Notebook
 .ipynb_checkpoints 
