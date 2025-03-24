@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Project specific files to ignore
+test_notebook.ipynb
+instructions.md
+logs/
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints 
