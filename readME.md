@@ -53,7 +53,6 @@ A RESTful API for predicting Bitcoin price movement built with Flask and contain
    ```
 
 4. Access the API at `http://localhost:50505`
-5. View the API documentation at `http://localhost:50505/docs`
 
 ### Making API Requests
 
